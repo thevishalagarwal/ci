@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: mls-ci-
+spec:
+  entrypoint: ci
+  
+  templates:
+  - name: integration-test
+    container:
+      image: thevishalagarwal/mls:0.1
+      command: [sh, -c]
+      args: ["python /src/tests/integration.py"]
+
+  - name: training
+    container:
+      image: thevishalagarwal/mls:0.1
+      command: [sh, -c]
+      args: ["python /src/train.py"]
+
+  - name: evaluation
+    container:
+      image: thevishalagarwal/mls:0.1
+      command: [sh, -c]
+      args: ["python /src/eval.py"]
+
+  - name: ci
+    dag:
+      tasks:
+      - name: integration-test
+        template: integration-test
+      - name: training
+        dependencies: [integration-test]
+        template: training
+      - name: evaluation
+        dependencies: [training]
+        template: evaluation
